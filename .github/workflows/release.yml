@@ -1,14 +1,15 @@
 name: Выпуск
-# Выпуск публикует робот GitHub: файл программы берётся из черновика выпуска, черновик потом удаляется.
+# Выпуск публикует робот GitHub: берёт последний черновик выпуска (текст и файл программы),
+# публикует его от своего имени с указанной версией, черновик удаляет.
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Версия, например v1.0.51"
+        description: "Версия, например v1.0.54"
         required: true
       draft:
-        description: "Номер черновика с файлом программы"
-        required: true
+        description: "Номер черновика (можно не заполнять: возьмётся последний)"
+        required: false
 permissions:
   contents: write
 jobs:
@@ -22,8 +23,13 @@ jobs:
           TAG: ${{ inputs.tag }}
           DRAFT: ${{ inputs.draft }}
         run: |
+          if [ -z "$DRAFT" ]; then
+            DRAFT=$(gh api repos/$REPO/releases --jq '[.[] | select(.draft)][0].id')
+          fi
+          if [ -z "$DRAFT" ] || [ "$DRAFT" = "null" ]; then echo "Нет черновика выпуска"; exit 1; fi
           gh api repos/$REPO/releases/$DRAFT --jq .body > notes.md
-          ASSET=$(gh api repos/$REPO/releases/$DRAFT --jq '.assets[0].id')
+          ASSET=$(gh api repos/$REPO/releases/$DRAFT --jq '[.assets[] | select(.name | endswith(".apk"))][0].id')
+          if [ -z "$ASSET" ] || [ "$ASSET" = "null" ]; then echo "В черновике нет файла .apk"; exit 1; fi
           gh api -H "Accept: application/octet-stream" repos/$REPO/releases/assets/$ASSET > Save_video_fries.apk
           gh api -X DELETE repos/$REPO/releases/$DRAFT
           gh release create "$TAG" Save_video_fries.apk --repo "$REPO" --title "Save video fries ${TAG#v}" --notes-file notes.md --latest
