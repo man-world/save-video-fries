@@ -1,0 +1,29 @@
+name: Выпуск
+# Выпуск публикует робот GitHub: файл программы берётся из черновика выпуска, черновик потом удаляется.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Версия, например v1.0.51"
+        required: true
+      draft:
+        description: "Номер черновика с файлом программы"
+        required: true
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Выпуск
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ inputs.tag }}
+          DRAFT: ${{ inputs.draft }}
+        run: |
+          gh api repos/$REPO/releases/$DRAFT --jq .body > notes.md
+          ASSET=$(gh api repos/$REPO/releases/$DRAFT --jq '.assets[0].id')
+          gh api -H "Accept: application/octet-stream" repos/$REPO/releases/assets/$ASSET > Save_video_fries.apk
+          gh api -X DELETE repos/$REPO/releases/$DRAFT
+          gh release create "$TAG" Save_video_fries.apk --repo "$REPO" --title "Save video fries ${TAG#v}" --notes-file notes.md --latest
