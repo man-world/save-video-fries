@@ -2,7 +2,7 @@
 
 <p align="center">
 <b>Сохраняет видео и музыку по ссылке. Пока качается, картошка его ест.</b><br>
-YouTube · VK · Rutube · Instagram · и ещё тысячи сайтов
+YouTube · VK · Rutube · Instagram · Одноклассники · Дзен · Facebook · Twitch · Pinterest · SoundCloud · и ещё тысячи сайтов
 </p>
 
 <p align="center">
